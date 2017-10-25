@@ -13,7 +13,7 @@ Please direct any bugs or comments to the [issues page](https://github.com/cjdor
 ### Installation
 
 - This package is built on top of the [`ExactpAdics` package](https://cjdoris.github.io/ExactpAdics), so first you need to download and attach that.
-- Either [download the latest release of this package](https://github.com/cjdoris/Genus2Conductor/releases) or [copy the repository](https://github.com/cjdoris/Genus2Conductor/releases).
+- Either [download the latest release of this package](https://github.com/cjdoris/Genus2Conductor/releases) or [copy the repository](https://github.com/cjdoris/Genus2Conductor).
 - Attach the `spec_ExactpAdics` spec file (e.g. `AttachSpec("/path/to/this/package/spec_ExactpAdics")`; see [the MAGMA documentation](http://magma.maths.usyd.edu.au/magma/handbook/functions_procedures_and_packages)).
 
 ### Intrinsics
