@@ -343,7 +343,7 @@ intrinsic OddConductor(C :: CrvHyp[FldNum]) -> .
   D := Discriminant(C);
   K := BaseField(C);
   OK := Integers(K);
-  return &*[p^Conductor(C, p) where p:=fac[1] : fac in Factorization(ideal<OK | Numerator(D), Denominator(D)>)];
+  return &*[p^Conductor(C, p) : fac in Factorization(ideal<OK | Numerator(D) * Denominator(D)>) | not IsDivisibleBy(AbsoluteNorm(p), 2) where p:=fac[1]];
 end intrinsic;
 
 intrinsic Conductor_Genus2(C :: CrvHyp[FldRat] : UseRegularModels:=true, MaximumPrecision:=Infinity(), UseOgg:=true) -> RngIntElt
