@@ -1,0 +1,154 @@
+declare verbose EvenConductorExponent_Genus2, 2;
+
+import "/opt/magma-2.22-6/package/Geometry/Crv/RegModel/interface.m": number_of_points_on_special_fibre, splitting_degrees;
+Z := Integers();
+
+function SemistableType(C,P : big:=200)
+  // Potential semistable types in genus 2 (from Liu's paper "Courbes stables de genre 2...")
+  // returns LiuType,M2D2Type,AbelianPart,ToricPart
+  // e.g. "I","2",2,0 for potentially good, "VI","1xIn",1,1 for potentially ell-x-nodal
+ 
+  if Type(C) eq RngUPolElt then C:=HyperellipticCurve(C); end if;
+  K:=BaseField(C);
+ 
+  // if Type(K) eq FldRat then
+  //   u:=P;
+  //   p:=P;
+  // else
+  //   error if Type(K) notin [FldNum,FldCyc,FldQuad],
+  //     "SemistableType only implemented over Q or number fields";
+  //   u:=UniformizingElement(P);
+  //   p:=Characteristic(ResidueClassField(P));
+  // end if;
+
+  u:=Type(P) eq RngInt select Generator(P) else UniformizingElement(P);
+  p:=Characteristic(ResidueClassField(P));
+ 
+  error if Genus(C) ne 2,
+    "SemistableType: only implemented in genus 2";
+  J2,J4,J6,J8,J10:=Explode(JInvariants(C));   // Igusa's Js
+  I2:=J2/12;
+  I4:=J2^2-2^3*3*J4;
+  if I4 eq 0 then I4:=u^big; end if; 
+    //! Perturb I4,I12 p-adically in the case it is 0; better ways?
+  I6:=J6;
+  I8:=J8;
+  I12:=-2^3*J4^3+3^2*J2*J4*J6-3^3*J6^2-J2^2*J8;
+  if I12 eq 0 then I12:=u^big; end if; 
+ 
+  J:=[0,J2,0,J4,0,J6,0,J8,0,J10];
+  I:=[0,I2,0,I4,0,I6,0,I8,0,0,0,I12];
+  int:=func<x|Valuation(x,P) ge 0>;
+  max:=func<x|Valuation(x,P) gt 0>;
+  vz:= func<x|Valuation(x,P) eq 0>;
+ 
+  eps:=p eq 2 select 4 else (p eq 3 select 3 else 1);
+ 
+  if forall{i: i in [1..5] | int(J[2*i]^5/J10^i) }
+    then data:=<"I","2",2,0>;
+  elif forall{i: i in [1..5] | int(J[2*i]^6/I12^i)} and max(J10^6/I12^5) then
+    data:=<"II","1n",1,1>;
+  elif forall{i: i in [1..5] | int(J[2*i]^2/I4^i)} and max(J10^2/I4^5)
+      and max(I12/I4^3) and (vz(J4/I4) or vz(J6^2/I4^3)) then
+    data:=<"III","Inm",0,2>;
+  elif forall{i: i in [2..5] | max(J[2*i]^2/I4^i)} then
+    data:=<"IV","Unmr",0,2>;
+  elif (max(I4^eps/I[2*eps]^2) and max(J10^eps/I[2*eps]^5) and max(I12^eps/I[2*eps]^6)) then
+    if int(I4^(3*eps)/J10^eps/I[2*eps]) and int(I12^eps/J10^eps/I[2*eps]) then
+      data:=<"V","1x1",2,0>;
+    elif int(I4^3/I12) and max(J10^eps*I[2*eps]/I12^eps) then
+      data:=<"VI","1xIn",1,1>;
+    elif max(I12/I4^3) and max(J10^eps*I[2*eps]/I4^(3*eps)) then
+      data:=<"VII","InxIm",0,2>;
+    else
+      data:=<"?","Fail1",2,0>;
+    end if;
+  else
+    data:=<"?","Fail0",2,0>;
+  end if;
+ 
+  return Explode(data);
+ 
+end function;
+
+function TameConductorFromRegularModel(C,p)
+  vprint EvenConductorExponent_Genus2: "using regular model...";
+  // print "using regular model";
+  Q:=Rationals();
+  g:=Genus(C);
+  R:=RegularModel(C,p: Warnings:=false);
+  q:=#R`k;
+  spldegs:=splitting_degrees(R); 
+  numgeocomps:=&+spldegs;
+  T:=PowerSeriesRing(Q,2*g+1).1;
+  ser:=Exp(&+[Parent(T)|number_of_points_on_special_fibre(R,n)/n*T^n: n in [1..2*g]]);
+  h0term:=1-T;                               
+  h2term:=&*[1-(q*T)^j: j in spldegs]; 
+  localfactor:=PolynomialRing(Q)!Eltseq(ser * h0term * h2term);
+  tamecond:=2*g-Degree(localfactor);
+  return tamecond;
+end function;
+
+function TameConductorFrom3Torsion(C,p,IOrder,dim3I : UseRegularModels:=false)
+  vprint EvenConductorExponent_Genus2: "computing tame conductor...";
+  if Type(C) eq RngUPolElt then C:=HyperellipticCurve(C); end if;
+  _,_,a,t:=SemistableType(C,p);
+  n:=4-dim3I;
+
+  if (dim3I eq 0) then return n; end if;           // two extremes: no invariants; e.g. I=C18
+  if dim3I eq 4 then return t; end if;             // or semistable
+
+  if IOrder mod 9 eq 0 then
+    return t eq 1 select 3 else 4;
+  end if;  
+
+  if t eq 0 then                                   // I,V         [totally abelian]
+    if (IOrder eq 3) and (dim3I eq 2) then return 4; end if;
+    return IsEven(dim3I) select n else n+1;
+  end if;                  
+
+  if IOrder eq 3 or ((t eq 1) and (IOrder in [2,6]))          // use regular model
+    then return UseRegularModels select TameConductorFromRegularModel(C,p) else false; end if;
+
+  if t eq 2 then                                   // III,IV,VII  [totally toric]
+    assert (IOrder in [2,6]) and (n eq 2);
+    return 3; 
+  end if;    
+
+  assert t eq 1;                                   // II,VI       [1-dim toric part]
+  assert IOrder mod 4 eq 0;                        // no invariants on the abelian part
+  assert dim3I in [1,2];
+  return 3;
+
+  //g:=GeometricGenus(Curve(Reduction(pMinimalWeierstrassModel(C,p),p)));
+end function;
+
+function wild_conductor_exponent(dus)
+  assert &+[du[1] : du in dus] eq 80;
+  us := Sort(SetToSequence({0,1} join {du[2] : du in dus}));
+  assert us[1] eq 0;
+  assert us[2] eq 1;
+  ds := [&+[Z | du[1] : du in dus | du[2] le u] : u in us];
+  error if not forall{d : d in ds | IsPowerOf(d+1, 3)}, "not powers of 3";
+  Ds := [D where _,D := IsPowerOf(d+1,3) : d in ds];
+  error if Ds[#Ds] ne 4, "last Ds ne 4";
+  cs := [(us[i+1] - us[i])*(4 - Ds[i]) : i in [1..#Ds-1]];
+  return Z ! &+cs[2..#cs], Z ! Ds[1];
+end function;
+
+function conductor_exponent_data(f, p, dues : UseRegularModels:=false, ExtraData:=false)
+  cwild, dtame := wild_conductor_exponent([<due[1], due[2]> : due in dues]);
+  e := LCM([due[3] : due in dues]);
+  ctame := TameConductorFrom3Torsion(f, p, e, dtame : UseRegularModels:=UseRegularModels);
+  ret := rec<recformat<WildExponent, TameExponent, TameFixedDegree, RamificationDegreeBound, Exponent, Error, DUEs, ExtraData> | DUEs:=dues, ExtraData:=ExtraData>;
+  ret`WildExponent := Z ! cwild;
+  ret`TameFixedDegree := Z ! dtame;
+  if ctame cmpne false then
+    ret`TameExponent := Z ! ctame;
+    ret`Exponent := ctame + cwild;
+  else
+    ret`Error := "could not compute tame conductor exponent";
+  end if;
+  ret`RamificationDegreeBound := Z ! e;
+  return ret;
+end function;
