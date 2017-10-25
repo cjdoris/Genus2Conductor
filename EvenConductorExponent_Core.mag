@@ -1,6 +1,129 @@
 declare verbose EvenConductorExponent_Genus2, 2;
 
-import "/opt/magma-2.22-6/package/Geometry/Crv/RegModel/interface.m": number_of_points_on_special_fibre, splitting_degrees;
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////
+// SEVERAL FUNCTIONS COPIED FROM Geometry/Crv/RegModel/interface.m
+
+function special_points_count(model)
+  if not assigned model`special_points_count then
+    model`special_points_count := [];
+
+    allfibres := model`abstract_fibres;
+    inds := [i : i in [1..#allfibres] | allfibres[i]`is_regular];
+    fibres := [allfibres[i] : i in inds];
+    p1_inds := [fib`patch1 : fib in allfibres];
+
+    // Intersection points (points possibly contained in more than one component)
+    // Note: second condition for same reason as in IntersectionMatrix
+    intn_pts := [pt : pt in model`points | pt`is_regular and pt`fibres subset inds];
+
+    // pt is counted on (the affine patch of) the component for fib 
+    //   <==> pt`patch = fib`patch1
+    for pt in intn_pts do 
+      idx := pt`patch;
+//printf "%o, %o\n", pt`fibres, [i : i in pt`fibres | p1_inds[i] eq idx];
+      count := #[i : i in pt`fibres | p1_inds[i] eq idx];
+      Append(~model`special_points_count, <Degree(pt`field,model`k), count> );
+    end for;
+//"intn_points_count is   ", model`special_points_count;
+
+    // Consider each pt in the locus at infinity of each component: 
+    // if pt was already considered as an intn_pt, do nothing;
+    // otherwise count = 1.
+    for fib_idx in inds do
+      fib := allfibres[fib_idx];
+      fib_intn_pts := [pt : pt in intn_pts | fib_idx in pt`fibres];
+      for p in [p: p in Keys(fib`explicit) | p ne fib`patch1] do 
+        // get intersection of fib with domain of patch p 
+        // as a disjoint union of 0-dimensional ideals
+        dom := model`patches[p]`domain;
+        fibp := [fib`explicit[p]`ideal + D : D in dom[3]];
+        pts := &cat [RadicalDecomposition(I) : I in fibp];
+        pts := [I : I in pts | forall{D: D in dom[1] | not D subset I}];
+        for I in pts do 
+          for pt0 in fib_intn_pts do 
+            if pt0`patch eq p and pt0`explicit[p]`ideal eq I then
+              continue I;
+            end if;
+          end for;
+          degI := Degree(Scheme(AffineSpace(Generic(I)), I));
+          Append(~model`special_points_count, <degI, 0>);
+        end for; // I
+      end for; // p
+    end for;      
+
+//"special_points_count is", model`special_points_count;
+  end if;
+  return model`special_points_count;
+end function;
+
+function number_of_points_on_special_fibre(model, degree)
+
+  F := ext< model`k | degree >;
+  p := Characteristic(F);
+  n := Ilog(p, #F);
+
+  // Count points on each fibre's affine patch1 
+  // Note: #RationalPoints code is garbage !!!
+
+  // avoid regular_model_indices (which sorts by computing Multiplicities)
+  fibres := [fib : fib in model`abstract_fibres | fib`is_regular];
+  ideals := [* fib`explicit[fib`patch1]`ideal : fib in fibres *];
+  comps := [* Scheme(AffineSpace(Generic(I)), I) : I in ideals *];
+  affine := [ #RationalPoints(C, F) : C in comps ];
+  num := &+ affine;
+  vprint RegularModel, 2 : "Affine counts:", affine;
+
+  // Adjust for intersection points appearing on more than 1 fibre, 
+  // and for points at infinity not appearing
+
+  for tup in special_points_count(model) do
+    if degree mod tup[1] eq 0 then
+      num +:= tup[1] * (1 - tup[2]); // has been counted tup[2] times
+    end if;
+  end for;
+
+  // Adjust for blownup points (currently counted once for each fibre they lie on)
+  // TO DO: is this correct?  
+  // (alternative: only adjust for blownup points lying in patch1 of fibres,
+  //  and above only consider points at infinity that are regular)
+//"Adjust nonregular:";
+  reg_fib_inds := [i : i in [1..#allfibres] | allfibres[i]`is_regular]
+                                 where allfibres is model`abstract_fibres;
+  for pt in model`points do 
+    if not pt`is_regular then
+      pt_meets := [i : i in pt`fibres | i in reg_fib_inds];
+      num -:= #pt_meets;
+//"pt meets", pt_meets;
+    end if; 
+  end for; 
+
+  return num;
+end function;
+
+function splitting_field(I)
+  assert IsPrime(I) and Dimension(I) eq 1;
+  C := Curve(AffineSpace(Generic(I)), I);
+  FF := AlgorithmicFunctionField(FunctionField(C));
+  return ExactConstantField(FF);
+end function;
+
+function geo_splitting_field(fib)
+  if not assigned fib`geo_splitting_field then
+    I := fib`explicit[fib`patch1]`ideal;
+    fib`geo_splitting_field := splitting_field(I);
+  end if;
+  return fib`geo_splitting_field;
+end function;
+
+function splitting_degrees(model)
+  return [ Degree(geo_splitting_field(fib), model`k) 
+         : fib in model`abstract_fibres | fib`is_regular ];
+end function;
+
+// END COPIED FUNCTIONS
+//////////////////////////////////////////////////////////////////////////////////////////////////////
+
 Z := Integers();
 
 function SemistableType(C,P : big:=200)
