@@ -10,6 +10,11 @@ Please direct any bugs or comments to the [issues page](https://github.com/cjdor
 
 ## User Manual
 
+- [Installation](#installation)
+- [Example](#example)
+- [Intrinsics](#intrinsics)
+- [Verbosity](#verbosity)
+
 ### Installation
 
 - This package is built on top of the [`ExactpAdics` package](https://cjdoris.github.io/ExactpAdics), so first you need to download and attach that.
