@@ -16,6 +16,18 @@ Please direct any bugs or comments to the [issues page](https://github.com/cjdor
 - Either [download the latest release of this package](https://github.com/cjdoris/Genus2Conductor/releases/latest) or [copy the repository](https://github.com/cjdoris/Genus2Conductor).
 - Attach the `spec_ExactpAdics` spec file (e.g. `AttachSpec("/path/to/this/package/spec_ExactpAdics")`; see [the MAGMA documentation](http://magma.maths.usyd.edu.au/magma/handbook/functions_procedures_and_packages)).
 
+### Example
+
+The following session verifies that the conductor of the curve 15360.f.983040.2 in the LMFDB is 15360. It takes about a minute to execute.
+
+```
+> // the following line is copied from the LMFDB entry at
+> // http://www.lmfdb.org/Genus2Curve/Q/15360/f/983040/2
+> R<x> := PolynomialRing(Rationals()); C := HyperellipticCurve(R![-30, 0, -37, 0, -15, 0, -2], R![]);
+> Conductor_Genus2(C);
+15360
+```
+
 ### Intrinsics
 
 ```
