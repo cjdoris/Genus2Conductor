@@ -30,6 +30,7 @@ The conductor of `C`, a hyperelliptic curve defined over the rationals or a numb
 - `UseOgg:=true`: Use Ogg's formula to compute conductor exponents, if possible.
 - `MaximumPrecision:=Infinity()`: The underlying algorithm works with p-adic numbers up to some precision determined by this. Setting it to a finite value will sometimes cause the intrinsic to raise an error, but avoids a potential source of infinite loop. Mainly for debugging.
 
+-----
 ```
 EvenConductorExponent_Genus2(C :: CrvHyp, p)
 -> RngIntElt
@@ -39,6 +40,7 @@ The conductor exponent of `C` at `p`. `C` must be defined over the rationals or 
 
 **Parameters.** As in previous intrinsic.
 
+-----
 ```
 EvenConductorExponentData_Genus2(C :: CrvHyp, p)
 -> Rec
@@ -54,6 +56,7 @@ The returned record includes the following fields:
 **Parameters.** As in previous intrinsic.
 - `UseRegularModels:=true`: Unlike the previous intrinsics, setting this to false will not cause an error to be raised. Instead, the `TameExponent` and `Exponent` fields of the returned record may not be set.
 
+-----
 ```
 OddConductor(C :: CrvHyp)
 -> .
