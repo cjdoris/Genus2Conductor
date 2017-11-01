@@ -10,6 +10,7 @@ Please direct any bugs or comments to the [issues page](https://github.com/cjdor
 
 ## User Manual
 
+**Contents**
 - [Installation](#installation)
 - [Example](#example)
 - [Intrinsics](#intrinsics)
