@@ -39,6 +39,11 @@ The following session verifies that the conductor of the [curve 15360.f.983040.2
 15360
 ```
 
+### Limitations
+
+- The algorithm requires its input to be defined globally (i.e. over a number field) and therefore we cannot for example compute the conductor exponent of a curve defined over the 2-adics.
+- The algorithm will run much slower if the coefficients of the defining polynomial are large. Compare about 1 minute for a curve defined with coefficients of a few digits to hours for a hundred digits per coefficient.
+
 ### Intrinsics
 
 ```
