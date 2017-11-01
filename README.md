@@ -33,6 +33,8 @@ The following session verifies that the conductor of the curve 15360.f.983040.2 
 > // the following line is copied from the LMFDB entry at
 > // http://www.lmfdb.org/Genus2Curve/Q/15360/f/983040/2
 > R<x> := PolynomialRing(Rationals()); C := HyperellipticCurve(R![-30, 0, -37, 0, -15, 0, -2], R![]);
+>
+> // compute the conductor
 > Conductor_Genus2(C);
 15360
 ```
