@@ -47,9 +47,9 @@ Conductor_Genus2(C :: CrvHyp)
 The conductor of `C`, a hyperelliptic curve defined over the rationals or a number field.
 
 **Parameters.**
-- `UseRegularModels:=true`: If necessary, a regular model will be computed in order to compute the tame part of the conductor. Occasionally, this step can take forever and so be skipped by setting this parameter to false. This can cause the intrinsic to raise an error if regular models were really needed.
-- `UseOgg:=true`: Use Ogg's formula to compute conductor exponents, if possible.
-- `MaximumPrecision:=Infinity()`: The underlying algorithm works with p-adic numbers up to some precision determined by this. Setting it to a finite value will sometimes cause the intrinsic to raise an error, but avoids a potential source of infinite loop. Mainly for debugging.
+- `UseRegularModels := true`: If necessary, a regular model will be computed in order to compute the tame part of the conductor. Occasionally, this step can take forever and so be skipped by setting this parameter to false. This can cause the intrinsic to raise an error if regular models were really needed.
+- `UseOgg := true`: Use Ogg's formula to compute conductor exponents, if possible.
+- `MaximumPrecision := Infinity()`: The underlying algorithm works with p-adic numbers up to some precision determined by this. Setting it to a finite value will sometimes cause the intrinsic to raise an error, but avoids a potential source of infinite loop. Mainly for debugging.
 
 -----
 ```
@@ -75,7 +75,7 @@ The returned record includes the following fields:
 - `WildExponent`: The wild part of the conductor exponent.
 
 **Parameters.** As in previous intrinsic.
-- `UseRegularModels:=true`: Unlike the previous intrinsics, setting this to false will not cause an error to be raised. Instead, the `TameExponent` and `Exponent` fields of the returned record may not be set.
+- `UseRegularModels := true`: Unlike the previous intrinsics, setting this to false will not cause an error to be raised. Instead, the `TameExponent` and `Exponent` fields of the returned record may not be set.
 
 -----
 ```
