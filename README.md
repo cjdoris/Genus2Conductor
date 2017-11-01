@@ -19,7 +19,7 @@ Please direct any bugs or comments to the [issues page](https://github.com/cjdor
 
 - Download [the `ExactpAdics` package](https://cjdoris.github.com/ExactpAdics).
 - Download [the latest release of this package](https://github.com/cjdoris/Genus2Conductor/releases/latest) or copy [the repository](https://github.com/cjdoris/Genus2Conductor).
-- In MAGMA, attach the `spec` file from the `ExactpAdics` package and the `spec_ExactpAdics` file from this package. See [the example](#example) below or [the MAGMA documentation](http://magma.maths.usyd.edu.au/magma/handbook/functions_procedures_and_packages).
+- In MAGMA, attach the `spec` file from the `ExactpAdics` package and the `spec_ExactpAdics` file from this package. See [the example](#example) below or [the MAGMA documentation](http://magma.maths.usyd.edu.au/magma/handbook/text/24#173).
 
 ### Example
 
