@@ -23,15 +23,14 @@ Please direct any bugs or comments to the [issues page](https://github.com/cjdor
 
 ### Example
 
-The following session verifies that the conductor of the curve 15360.f.983040.2 in the LMFDB is 15360. It takes about a minute to execute.
+The following session verifies that the conductor of the [curve 15360.f.983040.2 in the LMFDB](http://www.lmfdb.org/Genus2Curve/Q/15360/f/983040/2) is 15360. It takes about a minute to execute.
 
 ```
 > // you only need to do the following once per MAGMA session, or put it into your startup file
 > AttachSpec("/path/to/ExactpAdics/package/spec");
 > AttachSpec("/path/to/this/package/spec_ExactpAdics");
 >
-> // the following line is copied from the LMFDB entry at
-> // http://www.lmfdb.org/Genus2Curve/Q/15360/f/983040/2
+> // the following line is copied from the LMFDB entry
 > R<x> := PolynomialRing(Rationals()); C := HyperellipticCurve(R![-30, 0, -37, 0, -15, 0, -2], R![]);
 >
 > // compute the conductor
