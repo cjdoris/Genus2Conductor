@@ -48,12 +48,13 @@ The following session verifies that the conductor of the [curve 15360.f.983040.2
 
 ```
 Conductor_Genus2(C :: CrvHyp)
--> .
+-> RngIntElt or RngOrdIdl
 ```
 
 The conductor of `C`, a hyperelliptic curve defined over the rationals or a number field.
 
 **Parameters.**
+- `Proof:=true`: By default, this algorithm produces proven results. When `false`, the output is not proven to be correct but it is exceedingly unlikely to be incorrect. Can run significantly quicker as a result.
 - `UseRegularModels := true`: If necessary, a regular model will be computed in order to compute the tame part of the conductor. Occasionally, this step can take forever and so be skipped by setting this parameter to false. This can cause the intrinsic to raise an error if regular models were really needed.
 - `UseOgg := true`: Use Ogg's formula to compute conductor exponents, if possible.
 - `MaximumPrecision := Infinity()`: The underlying algorithm works with p-adic numbers up to some precision determined by this. Setting it to a finite value will sometimes cause the intrinsic to raise an error, but avoids a potential source of infinite loop. Mainly for debugging.
@@ -106,7 +107,7 @@ The returned record includes the following fields:
 -----
 ```
 OddConductor(C :: CrvHyp)
--> .
+-> RngIntElt or RngOrdIdl
 ```
 
 The odd part of the conductor of `C`. This is provided for convenience to work in tandem with `EvenConductorExponentData_Genus2`.
