@@ -6,6 +6,9 @@ Z := Integers();
 
 // This file requires the ExactpAdics package to already be attached.
 
+FACTORS := recformat<success, err, seed, moebius, groebner_basis, K, FtoK, factors, proof>;
+FACTOR := recformat<b0, b1, b2, b3, c0, c1, c2, L, M, c2_fac, b3_fac, c2_fac_idx>;
+
 // given f(x) defined over number field F, and prime p of F, finds the 3-torsion of the hyper-elliptic curve C:y^2=f(x) over F_p
 function find_3torsion(f, p
   : MinPrec:=100
@@ -14,9 +17,9 @@ function find_3torsion(f, p
   , Strategy:=[* MinPrec, <"limit", MaxPrec>, <"randomize", Randomize>, <"double">*]
   , Catch:=false
   , MobiusSkip:=0
+  , Proof:=true
 )
-  r := rec<recformat<success, err, seed, moebius, groebner_basis, K, FtoK, factors> | success:=false, seed:=[a,b] where a,b:=GetSeed()>;
-  FACTOR := recformat<b0, b1, b2, b3, c0, c1, c2, L, M, c2_fac, b3_fac, c2_fac_idx>;
+  r := rec<FACTORS | success:=false, seed:=[a,b] where a,b:=GetSeed(), proof:=Proof>;
 
   procedure go(~r)
     loc_f := f;
@@ -160,85 +163,93 @@ function find_3torsion(f, p
         c1M := M ! c1;
         c2M := M ! c2;
 
-        // find b3
-        vprint EvenConductorExponent_Genus2: "finding b3...";
-        b3 := Roots(ChangeRing(b3_fac, M) : Strategy:=Strategy)[1][1];
+        if Proof then
 
-        // find b2
-        vprint EvenConductorExponent_Genus2: "finding b2...";
-        b2 := evaluate_to_linear_root(G[3], 3, [M|0,0,b3,c0M,c1M,c2M]);
+          // find b3
+          vprint EvenConductorExponent_Genus2: "finding b3...";
+          b3 := Roots(ChangeRing(b3_fac, M) : Strategy:=Strategy)[1][1];
 
-        // find b1
-        vprint EvenConductorExponent_Genus2: "finding b1...";
-        b1 := evaluate_to_linear_root(G[2], 2, [M|0,b2,b3,c0M,c1M,c2M]);
+          // find b2
+          vprint EvenConductorExponent_Genus2: "finding b2...";
+          b2 := evaluate_to_linear_root(G[3], 3, [M|0,0,b3,c0M,c1M,c2M]);
 
-        // find b2
-        vprint EvenConductorExponent_Genus2: "finding b0...";
-        b0 := evaluate_to_linear_root(G[1], 1, [M|b1,b2,b3,c0M,c1M,c2M]);
+          // find b1
+          vprint EvenConductorExponent_Genus2: "finding b1...";
+          b1 := evaluate_to_linear_root(G[2], 2, [M|0,b2,b3,c0M,c1M,c2M]);
 
-        // hensel lift
-        vprint EvenConductorExponent_Genus2: "hensel lifting...";
-        soln0 := [M| b0, b1, b2, b3, c0, c1, c2];
-        ok, soln := IsHenselLiftable(ChangeUniverse(eqns, PolynomialRing(M, 7)), soln0 : Strategy:=Strategy);
-        assert ok;
-        bb0, bb1, bb2, bb3, cc0, cc1, cc2 := Explode(soln);
+          // find b2
+          vprint EvenConductorExponent_Genus2: "finding b0...";
+          b0 := evaluate_to_linear_root(G[1], 1, [M|b1,b2,b3,c0M,c1M,c2M]);
 
-        // check primitivity
-        vprint EvenConductorExponent_Genus2: "checking primitivity (residue)...";
-        assert Degree(m) eq ideg
-          where m := MinimalPolynomial(rhobar, Kbar)
-          where rhobar := ResidueClass(rho)
-          where rho := Evaluate(c2_cert`Rho, cc2)
-          where Kbar := ResidueClassField(K)
-          where ideg := InertiaDegree(L, K);
-        assert Degree(m) eq ideg
-          where m := MinimalPolynomial(rhobar, Lbar)
-          where rhobar := ResidueClass(rho)
-          where rho := Evaluate(b3_cert`Rho, bb3)
-          where Lbar := ResidueClassField(L)
-          where ideg := InertiaDegree(M, L);
-        vprint EvenConductorExponent_Genus2: "checking primitivity (valuation)...";
-        assert ValuationEq(pi, RamificationDegree(M, L))
-          where pi := Evaluate(c2_cert`Pi, cc2);
-        assert ValuationEq(pi, 1)
-          where pi := Evaluate(b3_cert`Pi, bb3);
+          // hensel lift
+          vprint EvenConductorExponent_Genus2: "hensel lifting...";
+          soln0 := [M| b0, b1, b2, b3, c0, c1, c2];
+          ok, soln := IsHenselLiftable(ChangeUniverse(eqns, PolynomialRing(M, 7)), soln0 : Strategy:=Strategy, Slopes:=[Value(WeakValuation(x)) : x in soln0]);
+          assert ok;
+          bb0, bb1, bb2, bb3, cc0, cc1, cc2 := Explode(soln);
 
-        // save off the factor
-        Append(~factors, rec<FACTOR | c0:=cc0, c1:=cc1, c2:=cc2, b0:=bb0, b1:=bb1, b2:=bb2, b3:=bb3, L:=L, M:=M, c2_fac:=c2_fac, b3_fac:=b3_fac, c2_fac_idx:=i>);
+          // check primitivity
+          vprint EvenConductorExponent_Genus2: "checking primitivity (residue)...";
+          assert Degree(m) eq ideg
+            where m := MinimalPolynomial(rhobar, Kbar)
+            where rhobar := ResidueClass(rho)
+            where rho := Evaluate(c2_cert`Rho, cc2)
+            where Kbar := ResidueClassField(K)
+            where ideg := InertiaDegree(L, K);
+          assert Degree(m) eq ideg
+            where m := MinimalPolynomial(rhobar, Lbar)
+            where rhobar := ResidueClass(rho)
+            where rho := Evaluate(b3_cert`Rho, bb3)
+            where Lbar := ResidueClassField(L)
+            where ideg := InertiaDegree(M, L);
+          vprint EvenConductorExponent_Genus2: "checking primitivity (valuation)...";
+          assert ValuationEq(pi, RamificationDegree(M, L))
+            where pi := Evaluate(c2_cert`Pi, cc2);
+          assert ValuationEq(pi, 1)
+            where pi := Evaluate(b3_cert`Pi, bb3);
+
+          // save off the factor
+          Append(~factors, rec<FACTOR | c0:=cc0, c1:=cc1, c2:=cc2, b0:=bb0, b1:=bb1, b2:=bb2, b3:=bb3, L:=L, M:=M, c2_fac:=c2_fac, b3_fac:=b3_fac, c2_fac_idx:=i>);
+
+        else
+          // Proof = false
+          Append(~factors, rec<FACTOR | L:=L, M:=M, c2_fac:=c2_fac, b3_fac:=b3_fac, c2_fac_idx:=i>);
+        end if;
       end for;
     end for;
 
     assert &+[Degree(x`M, K) : x in factors] eq 80;
 
-    // TODO: check distinctness
-    vprint EvenConductorExponent_Genus2: "checking distinctness...";
-    for i in [1..#factors] do
-      f1 := factors[i];
-      L1 := f1`L;
-      M1 := f1`M;
-      for j in [i+1..#factors] do
-        f2 := factors[j];
-        L2 := f2`L;
-        M2 := f2`M;
-        if Degree(L1, K) eq Degree(L2, K)
-        and Degree(M1, L1) eq Degree(M2, L2)
-        and RamificationDegree(L1, K) eq RamificationDegree(L2, K)
-        and RamificationDegree(M1, L1) eq RamificationDegree(M2, L2)
-        and Vertices(RamificationPolygon(L1, K)) eq Vertices(RamificationPolygon(L2, K))
-        and Vertices(RamificationPolygon(M1, L1)) eq Vertices(RamificationPolygon(M2, L2))
-        then
-          if f1`c2_fac_idx eq f2`c2_fac_idx then
-            // c2 are the same
-            assert L1 eq L2;
-            // check that val(b3_fac(b3)) > val(b3_fac(b3'))
-            assert ValuationGtValuation(Evaluate(f1`b3_fac, f1`b3), Evaluate(f1`b3_fac, f2`b3) : Strategy:=Strategy);
-          else
-            // check that val(c2_fac(c2)) > val(c2_fac(c2'))
-            assert ValuationGtValuation(Evaluate(f1`c2_fac, f1`c2), Evaluate(f1`c2_fac, f2`c2) : Strategy:=Strategy);
+    if Proof then
+      vprint EvenConductorExponent_Genus2: "checking distinctness...";
+      for i in [1..#factors] do
+        f1 := factors[i];
+        L1 := f1`L;
+        M1 := f1`M;
+        for j in [i+1..#factors] do
+          f2 := factors[j];
+          L2 := f2`L;
+          M2 := f2`M;
+          if Degree(L1, K) eq Degree(L2, K)
+          and Degree(M1, L1) eq Degree(M2, L2)
+          and RamificationDegree(L1, K) eq RamificationDegree(L2, K)
+          and RamificationDegree(M1, L1) eq RamificationDegree(M2, L2)
+          and Vertices(RamificationPolygon(L1, K)) eq Vertices(RamificationPolygon(L2, K))
+          and Vertices(RamificationPolygon(M1, L1)) eq Vertices(RamificationPolygon(M2, L2))
+          then
+            if f1`c2_fac_idx eq f2`c2_fac_idx then
+              // c2 are the same
+              assert L1 eq L2;
+              // check that val(b3_fac(b3)) > val(b3_fac(b3'))
+              assert ValuationGtValuation(Evaluate(f1`b3_fac, f1`b3), Evaluate(f1`b3_fac, f2`b3) : Strategy:=Strategy);
+            else
+              // check that val(c2_fac(c2)) > val(c2_fac(c2'))
+              assert ValuationGtValuation(Evaluate(f1`c2_fac, f1`c2), Evaluate(f1`c2_fac, f2`c2) : Strategy:=Strategy);
+            end if;
           end if;
-        end if;
+        end for;
       end for;
-    end for;
+    end if;
 
     r`factors := factors;
     r`success := true;
@@ -272,7 +283,7 @@ function prime_ideal(K, p)
   return pp;
 end function;
 
-function evencondexpdata(C, p : UseRegularModels:=true, MaximumPrecision:=Infinity(), UseOgg:=true)
+function evencondexpdata(C, p : UseRegularModels:=true, MaximumPrecision:=Infinity(), UseOgg:=true, Proof:=true)
   error if Genus(C) ne 2, "Argument 1 must have genus 2";
   error if Type(UseRegularModels) ne BoolElt, "UseRegularModels must be a boolean";
   error if Type(UseOgg) ne BoolElt, "UseOgg must be a boolean";
@@ -287,14 +298,14 @@ function evencondexpdata(C, p : UseRegularModels:=true, MaximumPrecision:=Infini
   pp := ideal<OK | p>;
   error if not (IsPrime(pp) and IsDivisibleBy(AbsoluteNorm(pp), 2)), "Arugment 2 must be (coercible to) a prime over Argument 1 above 2";
   f := crvpol(C);
-  r := find_3torsion(f, pp : MaxPrec:=MaximumPrecision);
+  r := find_3torsion(f, pp : MaxPrec:=MaximumPrecision, Proof:=Proof);
   dues := [<Degree(L,K), Max(UpperBreaks(TransitionFunction(L,K))), RamificationDegree(L,K)> where L:=x`M : x in r`factors] where K:=r`K;
   s := conductor_exponent_data(f, pp, dues : UseRegularModels:=UseRegularModels, ExtraData:=r);
   return s;
 end function;
 
-function evencondexp(C, p : UseRegularModels:=true, MaximumPrecision:=Infinity(), UseOgg:=true)
-  r := evencondexpdata(C, p : UseRegularModels:=UseRegularModels, MaximumPrecision:=MaximumPrecision, UseOgg:=UseOgg);
+function evencondexp(C, p : UseRegularModels:=true, MaximumPrecision:=Infinity(), UseOgg:=true, Proof:=true)
+  r := evencondexpdata(C, p : UseRegularModels:=UseRegularModels, MaximumPrecision:=MaximumPrecision, UseOgg:=UseOgg, Proof:=Proof);
   if assigned r`Exponent then
     return r`Exponent;
   else
@@ -302,34 +313,38 @@ function evencondexp(C, p : UseRegularModels:=true, MaximumPrecision:=Infinity()
   end if;
 end function;
 
-intrinsic EvenConductorExponent_Genus2(C :: CrvHyp[FldRat], p : UseRegularModels:=true, MaximumPrecision:=Infinity(), UseOgg:=true) -> RngIntElt
+function is_even(p)
+  return IsDivisibleBy(AbsoluteNorm(p), 2);
+end function;
+
+intrinsic EvenConductorExponent_Genus2(C :: CrvHyp[FldRat], p : UseRegularModels:=true, MaximumPrecision:=Infinity(), UseOgg:=true, Proof:=true) -> RngIntElt
   {The conductor exponent of C at prime p.}
-  return evencondexp(C, p : UseRegularModels:=UseRegularModels, MaximumPrecision:=MaximumPrecision, UseOgg:=UseOgg);
+  return evencondexp(C, p : UseRegularModels:=UseRegularModels, MaximumPrecision:=MaximumPrecision, UseOgg:=UseOgg, Proof:=Proof);
 end intrinsic;
 
-intrinsic EvenConductorExponent_Genus2(C :: CrvHyp[FldNum], p : UseRegularModels:=true, MaximumPrecision:=Infinity(), UseOgg:=true) -> RngIntElt
+intrinsic EvenConductorExponent_Genus2(C :: CrvHyp[FldNum], p : UseRegularModels:=true, MaximumPrecision:=Infinity(), UseOgg:=true, Proof:=true) -> RngIntElt
   {"}
-  return evencondexp(C, p : UseRegularModels:=UseRegularModels, MaximumPrecision:=MaximumPrecision, UseOgg:=UseOgg);
+  return evencondexp(C, p : UseRegularModels:=UseRegularModels, MaximumPrecision:=MaximumPrecision, UseOgg:=UseOgg, Proof:=Proof);
 end intrinsic;
 
-intrinsic EvenConductorExponent_Genus2(C :: CrvHyp[FldRat] : UseRegularModels:=true, MaximumPrecision:=Infinity(), UseOgg:=true) -> RngIntElt
+intrinsic EvenConductorExponent_Genus2(C :: CrvHyp[FldRat] : UseRegularModels:=true, MaximumPrecision:=Infinity(), UseOgg:=true, Proof:=true) -> RngIntElt
   {The conductor exponent of C at 2.}
-  return evencondexp(C, 2 : UseRegularModels:=UseRegularModels, MaximumPrecision:=MaximumPrecision, UseOgg:=UseOgg);
+  return evencondexp(C, 2 : UseRegularModels:=UseRegularModels, MaximumPrecision:=MaximumPrecision, UseOgg:=UseOgg, Proof:=Proof);
 end intrinsic;
 
-intrinsic EvenConductorExponentData_Genus2(C :: CrvHyp[FldRat], p : UseRegularModels:=true, MaximumPrecision:=Infinity(), UseOgg:=true) -> Rec
+intrinsic EvenConductorExponentData_Genus2(C :: CrvHyp[FldRat], p : UseRegularModels:=true, MaximumPrecision:=Infinity(), UseOgg:=true, Proof:=true) -> Rec
   {Data relating to the conductor exponent of C at prime p.}
-  return evencondexpdata(C, p : UseRegularModels:=UseRegularModels, MaximumPrecision:=MaximumPrecision, UseOgg:=UseOgg);
+  return evencondexpdata(C, p : UseRegularModels:=UseRegularModels, MaximumPrecision:=MaximumPrecision, UseOgg:=UseOgg, Proof:=Proof);
 end intrinsic;
 
-intrinsic EvenConductorExponentData_Genus2(C :: CrvHyp[FldNum], p : UseRegularModels:=true, MaximumPrecision:=Infinity(), UseOgg:=true) -> Rec
+intrinsic EvenConductorExponentData_Genus2(C :: CrvHyp[FldNum], p : UseRegularModels:=true, MaximumPrecision:=Infinity(), UseOgg:=true, Proof:=true) -> Rec
   {"}
-  return evencondexpdata(C, p : UseRegularModels:=UseRegularModels, MaximumPrecision:=MaximumPrecision, UseOgg:=UseOgg);
+  return evencondexpdata(C, p : UseRegularModels:=UseRegularModels, MaximumPrecision:=MaximumPrecision, UseOgg:=UseOgg, Proof:=Proof);
 end intrinsic;
 
-intrinsic EvenConductorExponentData_Genus2(C :: CrvHyp[FldRat] : UseRegularModels:=true, MaximumPrecision:=Infinity(), UseOgg:=true) -> Rec
+intrinsic EvenConductorExponentData_Genus2(C :: CrvHyp[FldRat] : UseRegularModels:=true, MaximumPrecision:=Infinity(), UseOgg:=true, Proof:=true) -> Rec
   {Data relating to the conductor exponent of C at 2.}
-  return evencondexpdata(C, 2 : UseRegularModels:=UseRegularModels, MaximumPrecision:=MaximumPrecision, UseOgg:=UseOgg);
+  return evencondexpdata(C, 2 : UseRegularModels:=UseRegularModels, MaximumPrecision:=MaximumPrecision, UseOgg:=UseOgg, Proof:=Proof);
 end intrinsic;
 
 intrinsic OddConductor(C :: CrvHyp[FldRat]) -> RngIntElt
@@ -343,11 +358,19 @@ intrinsic OddConductor(C :: CrvHyp[FldNum]) -> .
   D := Discriminant(C);
   K := BaseField(C);
   OK := Integers(K);
-  return &*[p^Conductor(C, p) : fac in Factorization(ideal<OK | Numerator(D) * Denominator(D)>) | not IsDivisibleBy(AbsoluteNorm(p), 2) where p:=fac[1]];
+  return &*[p^Conductor(C, p) : fac in Factorization(ideal<OK | Numerator(D) * Denominator(D)>) | not is_even(p) where p:=fac[1]];
 end intrinsic;
 
-intrinsic Conductor_Genus2(C :: CrvHyp[FldRat] : UseRegularModels:=true, MaximumPrecision:=Infinity(), UseOgg:=true) -> RngIntElt
-  {"}
+intrinsic Conductor_Genus2(C :: CrvHyp[FldRat] : UseRegularModels:=true, MaximumPrecision:=Infinity(), UseOgg:=true, Proof:=true) -> RngIntElt
+  {The conductor of C.}
   D := Discriminant(C);
-  return &*[Z | p^(p eq 2 select EvenConductorExponent_Genus2(C : UseRegularModels:=UseRegularModels, MaximumPrecision:=MaximumPrecision, UseOgg:=UseOgg) else Conductor(C, p)) : p in PrimeDivisors(Numerator(D) * Denominator(D))];
+  return &*[Z | p^(p eq 2 select EvenConductorExponent_Genus2(C : UseRegularModels:=UseRegularModels, MaximumPrecision:=MaximumPrecision, UseOgg:=UseOgg, Proof:=Proof) else Conductor(C, p)) : p in PrimeDivisors(Numerator(D) * Denominator(D))];
+end intrinsic;
+
+intrinsic Conductor_Genus2(C :: CrvHyp[FldNum] : UseRegularModels:=true, MaximumPrecision:=Infinity(), UseOgg:=true, Proof:=true) -> RngOrdIdl
+  {The conductor of C.}
+  D := Discriminant(C);
+  F := BaseField(C);
+  OF := Integers(F);
+  return &*[PowerIdeal(OF) | p^exponent where exponent := is_even(p) select EvenConductorExponent_Genus2(C, p : UseRegularModels:=UseRegularModels, MaximumPrecision:=MaximumPrecision, UseOgg:=UseOgg, Proof:=Proof) else Conductor(C, p) where p:=fac[1] : fac in Factorization(ideal<OF | Numerator(D)*Denominator(D)>)];
 end intrinsic;
