@@ -54,9 +54,9 @@ Conductor_Genus2(C :: CrvHyp)
 The conductor of `C`, a hyperelliptic curve defined over the rationals or a number field.
 
 **Parameters.**
-- `Proof:=true`: By default, this algorithm produces proven results. When `false`, the output is not proven to be correct but it is exceedingly unlikely to be incorrect. Can run significantly quicker as a result.
+- `Proof := true`: By default, this algorithm produces proven results. When `false`, the output is not proven to be correct but it is exceedingly unlikely to be incorrect. Can run significantly quicker as a result. Can specify which proof method to use by passing a string: `"Local"` (the default) or `"Global"`. The global method is faster when the defining polynomial has small coefficients, and can half the run-time for curves over the rationals, but the benefits decrease as the degree of the number field grows; if the coefficients are not small, the local method is significantly quicker.
 - `UseRegularModels := true`: If necessary, a regular model will be computed in order to compute the tame part of the conductor. Occasionally, this step can take forever and so be skipped by setting this parameter to false. This can cause the intrinsic to raise an error if regular models were really needed.
-- `UseOgg := true`: Use Ogg's formula to compute conductor exponents, if possible.
+- `UseOgg := true`: Use Ogg's formula to compute conductor exponents, if possible (i.e. if the discriminant has valuation less than 12).
 - `MaximumPrecision := Infinity()`: The underlying algorithm works with p-adic numbers up to some precision determined by this. Setting it to a finite value will sometimes cause the intrinsic to raise an error, but avoids a potential source of infinite loop. Mainly for debugging.
 
 -----
