@@ -15,6 +15,7 @@ Please direct any bugs or comments to the [issues page](https://github.com/cjdor
 - [Example](#example)
 - [Intrinsics](#intrinsics)
 - [Verbosity](#verbosity)
+- [Changelog](#changelog)
 
 ### Installation
 
@@ -115,3 +116,7 @@ The odd part of the conductor of `C`. This is provided for convenience to work i
 ### Verbosity
 
 The `EvenConductorExponent_Genus2` verbosity flag can be enabled for information about the execution of the algorithm. Level 1 logs each stage of the algorithm. Level 2 provides more information, including timings, mainly for debugging.
+
+### Changelog
+
+{% include_relative CHANGELOG.md %}
