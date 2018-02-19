@@ -218,20 +218,26 @@ function TameConductorFrom3Torsion(C,p,IOrder,dim3I : UseRegularModels:=false)
   _,_,a,t:=SemistableType(C,p);
   n:=4-dim3I;
 
+  // case (1)
   if (dim3I eq 0) then return n; end if;           // two extremes: no invariants; e.g. I=C18
+  // case (2)
   if dim3I eq 4 then return t; end if;             // or semistable
 
-  if IOrder mod 9 eq 0 then
-    return t eq 1 select 3 else 4;
-  end if;  
-
+  // case (3)
   if t eq 0 then                                   // I,V         [totally abelian]
     if (IOrder eq 3) and (dim3I eq 2) then return 4; end if;
     return IsEven(dim3I) select n else n+1;
   end if;                  
 
+  // case (4)
   if IOrder eq 3 or ((t eq 1) and (IOrder in [2,6]))          // use regular model
     then return UseRegularModels select TameConductorFromRegularModel(C,p) else false; end if;
+
+  // case (5) split into a few sub-cases
+  if IOrder mod 9 eq 0 then
+    assert IOrder eq 9;
+    return t eq 1 select 3 else 4;
+  end if;  
 
   if t eq 2 then                                   // III,IV,VII  [totally toric]
     assert (IOrder in [2,6]) and (n eq 2);
