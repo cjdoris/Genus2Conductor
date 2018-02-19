@@ -8,14 +8,15 @@ This implements the algorithm described in [this paper](https://arxiv.org/abs/17
 
 Please direct any bugs or comments to the [issues page](https://github.com/cjdoris/Genus2Conductor/issues).
 
-## User Manual
-
 **Contents**
-- [Installation](#installation)
-- [Example](#example)
-- [Intrinsics](#intrinsics)
-- [Verbosity](#verbosity)
+- [User Manual](#user-manual)
+  - [Installation](#installation)
+  - [Example](#example)
+  - [Intrinsics](#intrinsics)
+  - [Verbosity](#verbosity)
 - [Changelog](#changelog)
+
+## User Manual
 
 ### Installation
 
@@ -117,6 +118,6 @@ The odd part of the conductor of `C`. This is provided for convenience to work i
 
 The `EvenConductorExponent_Genus2` verbosity flag can be enabled for information about the execution of the algorithm. Level 1 logs each stage of the algorithm. Level 2 provides more information, including timings, mainly for debugging.
 
-### Changelog
+## Changelog
 
 {% include_relative CHANGELOG.md %}
