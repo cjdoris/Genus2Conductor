@@ -60,6 +60,7 @@ The conductor of `C`, a hyperelliptic curve defined over the rationals or a numb
 - `UseRegularModels := true`: If necessary, a regular model will be computed in order to compute the tame part of the conductor. Occasionally, this step can take forever and so be skipped by setting this parameter to false. This can cause the intrinsic to raise an error if regular models were really needed.
 - `UseOgg := true`: Use Ogg's formula to compute conductor exponents, if possible (i.e. if the discriminant has valuation less than 12).
 - `MaximumPrecision := Infinity()`: The underlying algorithm works with p-adic numbers up to some precision determined by this. Setting it to a finite value will sometimes cause the intrinsic to raise an error, but avoids a potential source of infinite loop. Mainly for debugging.
+- `MobiusRandomize := 0`: By default, the algorithm first tries the identity Mobius transformation before trying ones with larger coefficients. Setting this to an integer greater than 0 will skip the identity and start with transformations with coefficients of size up to this. If the algorithm ever appears to be stuck at a factorization step, try setting this to a higher value &mdash; e.g. first try 2, then 3, and so on.
 
 -----
 ```

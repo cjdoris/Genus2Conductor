@@ -17,6 +17,7 @@ function find_3torsion(f, p
   , Strategy:=[* MinPrec, <"limit", MaxPrec>, <"randomize", Randomize>, <"double">*]
   , Catch:=false
   , MobiusSkip:=0
+  , MobiusRandomize:=0
   , Proof:=true
   , UseNP:=true
   , Time:=false
@@ -71,20 +72,26 @@ function find_3torsion(f, p
     vprint EvenConductorExponent_Genus2: "finding equations...";
     R<B0, B1, B2, B3, C0, C1, C2> := PolynomialRing(F, 7);
     ntries := 0;
-    mobs := [[1,0,0,1]];
-    mobs_lim := 0;
+    if MobiusRandomize le 0 then
+      mobs := [[1,0,0,1]];
+      mobs_lim := 0;
+    else
+      mobs := [];
+      mobs_lim := MobiusRandomize;
+    end if;
     while true do
       ntries +:= 1;
       if ntries le MobiusSkip then
         continue;
       end if;
       // ensure there exists a mobius transformation
-      while mobs_lim lt ntries do
+      while #mobs lt ntries do
         mobs_lim +:= 1;
-        mobs cat:= SetToSequence({[a,b,c,d] : a,b,c,d in [-mobs_lim..mobs_lim] | a*d-b*c eq 1 and (c eq 0 or Evaluate(f, a/c) ne 0)} diff SequenceToSet(mobs));
+        mobs cat:= SetToSequence({[a,b,c,d] : a,b,c,d in [-mobs_lim..mobs_lim] | Max([Abs(x) : x in [a,b,c,d]]) eq mobs_lim and a*d-b*c eq 1 and (c eq 0 or Evaluate(f, a/c) ne 0)} diff SequenceToSet(mobs));
       end while;
       // get a defining polynomial
       r`moebius := mobs[ntries];
+      vprint EvenConductorExponent_Genus2, 2: "moebius =", r`moebius;
       a,b,c,d := Explode(r`moebius);
       f2 := &+[Coefficient(f, i) * Polynomial([F|b,a])^i * Polynomial([F|d,c])^(6-i) : i in [0..6]];
       assert Degree(f2) in [5,6];
@@ -343,7 +350,7 @@ function prime_ideal(K, p)
   return pp;
 end function;
 
-function evencondexpdata(C, p : UseRegularModels:=true, MaximumPrecision:=Infinity(), UseOgg:=true, Proof:=true)
+function evencondexpdata(C, p : UseRegularModels:=true, MaximumPrecision:=Infinity(), UseOgg:=true, Proof:=true, MobiusRandomize:=0)
   error if Genus(C) ne 2, "Argument 1 must have genus 2";
   error if Type(UseRegularModels) ne BoolElt, "UseRegularModels must be a boolean";
   error if Type(UseOgg) ne BoolElt, "UseOgg must be a boolean";
@@ -358,14 +365,14 @@ function evencondexpdata(C, p : UseRegularModels:=true, MaximumPrecision:=Infini
   pp := ideal<OK | p>;
   error if not (IsPrime(pp) and IsDivisibleBy(AbsoluteNorm(pp), 2)), "Arugment 2 must be (coercible to) a prime over Argument 1 above 2";
   f := crvpol(C);
-  r := find_3torsion(f, pp : MaxPrec:=MaximumPrecision, Proof:=Proof);
+  r := find_3torsion(f, pp : MaxPrec:=MaximumPrecision, Proof:=Proof, MobiusRandomize:=MobiusRandomize);
   dues := [<Degree(L,K), Max(UpperBreaks(TransitionFunction(L,K))), RamificationDegree(L,K)> where L:=x`M : x in r`factors] where K:=r`K;
   s := conductor_exponent_data(f, pp, dues : UseRegularModels:=UseRegularModels, ExtraData:=r);
   return s;
 end function;
 
-function evencondexp(C, p : UseRegularModels:=true, MaximumPrecision:=Infinity(), UseOgg:=true, Proof:=true)
-  r := evencondexpdata(C, p : UseRegularModels:=UseRegularModels, MaximumPrecision:=MaximumPrecision, UseOgg:=UseOgg, Proof:=Proof);
+function evencondexp(C, p : UseRegularModels:=true, MaximumPrecision:=Infinity(), UseOgg:=true, Proof:=true, MobiusRandomize:=0)
+  r := evencondexpdata(C, p : UseRegularModels:=UseRegularModels, MaximumPrecision:=MaximumPrecision, UseOgg:=UseOgg, Proof:=Proof, MobiusRandomize:=MobiusRandomize);
   if assigned r`Exponent then
     return r`Exponent;
   else
@@ -377,34 +384,34 @@ function is_even(p)
   return IsDivisibleBy(AbsoluteNorm(p), 2);
 end function;
 
-intrinsic EvenConductorExponent_Genus2(C :: CrvHyp[FldRat], p : UseRegularModels:=true, MaximumPrecision:=Infinity(), UseOgg:=true, Proof:=true) -> RngIntElt
+intrinsic EvenConductorExponent_Genus2(C :: CrvHyp[FldRat], p : UseRegularModels:=true, MaximumPrecision:=Infinity(), UseOgg:=true, Proof:=true, MobiusRandomize:=0) -> RngIntElt
   {The conductor exponent of C at prime p.}
-  return evencondexp(C, p : UseRegularModels:=UseRegularModels, MaximumPrecision:=MaximumPrecision, UseOgg:=UseOgg, Proof:=Proof);
+  return evencondexp(C, p : UseRegularModels:=UseRegularModels, MaximumPrecision:=MaximumPrecision, UseOgg:=UseOgg, Proof:=Proof, MobiusRandomize:=MobiusRandomize);
 end intrinsic;
 
-intrinsic EvenConductorExponent_Genus2(C :: CrvHyp[FldNum], p : UseRegularModels:=true, MaximumPrecision:=Infinity(), UseOgg:=true, Proof:=true) -> RngIntElt
+intrinsic EvenConductorExponent_Genus2(C :: CrvHyp[FldNum], p : UseRegularModels:=true, MaximumPrecision:=Infinity(), UseOgg:=true, Proof:=true, MobiusRandomize:=0) -> RngIntElt
   {"}
-  return evencondexp(C, p : UseRegularModels:=UseRegularModels, MaximumPrecision:=MaximumPrecision, UseOgg:=UseOgg, Proof:=Proof);
+  return evencondexp(C, p : UseRegularModels:=UseRegularModels, MaximumPrecision:=MaximumPrecision, UseOgg:=UseOgg, Proof:=Proof, MobiusRandomize:=MobiusRandomize);
 end intrinsic;
 
-intrinsic EvenConductorExponent_Genus2(C :: CrvHyp[FldRat] : UseRegularModels:=true, MaximumPrecision:=Infinity(), UseOgg:=true, Proof:=true) -> RngIntElt
+intrinsic EvenConductorExponent_Genus2(C :: CrvHyp[FldRat] : UseRegularModels:=true, MaximumPrecision:=Infinity(), UseOgg:=true, Proof:=true, MobiusRandomize:=0) -> RngIntElt
   {The conductor exponent of C at 2.}
-  return evencondexp(C, 2 : UseRegularModels:=UseRegularModels, MaximumPrecision:=MaximumPrecision, UseOgg:=UseOgg, Proof:=Proof);
+  return evencondexp(C, 2 : UseRegularModels:=UseRegularModels, MaximumPrecision:=MaximumPrecision, UseOgg:=UseOgg, Proof:=Proof, MobiusRandomize:=MobiusRandomize);
 end intrinsic;
 
-intrinsic EvenConductorExponentData_Genus2(C :: CrvHyp[FldRat], p : UseRegularModels:=true, MaximumPrecision:=Infinity(), UseOgg:=true, Proof:=true) -> Rec
+intrinsic EvenConductorExponentData_Genus2(C :: CrvHyp[FldRat], p : UseRegularModels:=true, MaximumPrecision:=Infinity(), UseOgg:=true, Proof:=true, MobiusRandomize:=0) -> Rec
   {Data relating to the conductor exponent of C at prime p.}
-  return evencondexpdata(C, p : UseRegularModels:=UseRegularModels, MaximumPrecision:=MaximumPrecision, UseOgg:=UseOgg, Proof:=Proof);
+  return evencondexpdata(C, p : UseRegularModels:=UseRegularModels, MaximumPrecision:=MaximumPrecision, UseOgg:=UseOgg, Proof:=Proof, MobiusRandomize:=MobiusRandomize);
 end intrinsic;
 
-intrinsic EvenConductorExponentData_Genus2(C :: CrvHyp[FldNum], p : UseRegularModels:=true, MaximumPrecision:=Infinity(), UseOgg:=true, Proof:=true) -> Rec
+intrinsic EvenConductorExponentData_Genus2(C :: CrvHyp[FldNum], p : UseRegularModels:=true, MaximumPrecision:=Infinity(), UseOgg:=true, Proof:=true, MobiusRandomize:=0) -> Rec
   {"}
-  return evencondexpdata(C, p : UseRegularModels:=UseRegularModels, MaximumPrecision:=MaximumPrecision, UseOgg:=UseOgg, Proof:=Proof);
+  return evencondexpdata(C, p : UseRegularModels:=UseRegularModels, MaximumPrecision:=MaximumPrecision, UseOgg:=UseOgg, Proof:=Proof, MobiusRandomize:=MobiusRandomize);
 end intrinsic;
 
-intrinsic EvenConductorExponentData_Genus2(C :: CrvHyp[FldRat] : UseRegularModels:=true, MaximumPrecision:=Infinity(), UseOgg:=true, Proof:=true) -> Rec
+intrinsic EvenConductorExponentData_Genus2(C :: CrvHyp[FldRat] : UseRegularModels:=true, MaximumPrecision:=Infinity(), UseOgg:=true, Proof:=true, MobiusRandomize:=0) -> Rec
   {Data relating to the conductor exponent of C at 2.}
-  return evencondexpdata(C, 2 : UseRegularModels:=UseRegularModels, MaximumPrecision:=MaximumPrecision, UseOgg:=UseOgg, Proof:=Proof);
+  return evencondexpdata(C, 2 : UseRegularModels:=UseRegularModels, MaximumPrecision:=MaximumPrecision, UseOgg:=UseOgg, Proof:=Proof, MobiusRandomize:=MobiusRandomize);
 end intrinsic;
 
 intrinsic OddConductor(C :: CrvHyp[FldRat]) -> RngIntElt
@@ -421,16 +428,16 @@ intrinsic OddConductor(C :: CrvHyp[FldNum]) -> .
   return &*[p^Conductor(C, p) : fac in Factorization(ideal<OK | Numerator(D) * Denominator(D)>) | not is_even(p) where p:=fac[1]];
 end intrinsic;
 
-intrinsic Conductor_Genus2(C :: CrvHyp[FldRat] : UseRegularModels:=true, MaximumPrecision:=Infinity(), UseOgg:=true, Proof:=true) -> RngIntElt
+intrinsic Conductor_Genus2(C :: CrvHyp[FldRat] : UseRegularModels:=true, MaximumPrecision:=Infinity(), UseOgg:=true, Proof:=true, MobiusRandomize:=0) -> RngIntElt
   {The conductor of C.}
   D := Discriminant(C);
-  return &*[Z | p^(p eq 2 select EvenConductorExponent_Genus2(C : UseRegularModels:=UseRegularModels, MaximumPrecision:=MaximumPrecision, UseOgg:=UseOgg, Proof:=Proof) else Conductor(C, p)) : p in PrimeDivisors(Numerator(D) * Denominator(D))];
+  return &*[Z | p^(p eq 2 select EvenConductorExponent_Genus2(C : UseRegularModels:=UseRegularModels, MaximumPrecision:=MaximumPrecision, UseOgg:=UseOgg, Proof:=Proof, MobiusRandomize:=MobiusRandomize) else Conductor(C, p)) : p in PrimeDivisors(Numerator(D) * Denominator(D))];
 end intrinsic;
 
-intrinsic Conductor_Genus2(C :: CrvHyp[FldNum] : UseRegularModels:=true, MaximumPrecision:=Infinity(), UseOgg:=true, Proof:=true) -> RngOrdIdl
+intrinsic Conductor_Genus2(C :: CrvHyp[FldNum] : UseRegularModels:=true, MaximumPrecision:=Infinity(), UseOgg:=true, Proof:=true, MobiusRandomize:=0) -> RngOrdIdl
   {The conductor of C.}
   D := Discriminant(C);
   F := BaseField(C);
   OF := Integers(F);
-  return &*[PowerIdeal(OF) | p^exponent where exponent := is_even(p) select EvenConductorExponent_Genus2(C, p : UseRegularModels:=UseRegularModels, MaximumPrecision:=MaximumPrecision, UseOgg:=UseOgg, Proof:=Proof) else Conductor(C, p) where p:=fac[1] : fac in Factorization(ideal<OF | Numerator(D)*Denominator(D)>)];
+  return &*[PowerIdeal(OF) | p^exponent where exponent := is_even(p) select EvenConductorExponent_Genus2(C, p : UseRegularModels:=UseRegularModels, MaximumPrecision:=MaximumPrecision, UseOgg:=UseOgg, Proof:=Proof, MobiusRandomize:=MobiusRandomize) else Conductor(C, p) where p:=fac[1] : fac in Factorization(ideal<OF | Numerator(D)*Denominator(D)>)];
 end intrinsic;
