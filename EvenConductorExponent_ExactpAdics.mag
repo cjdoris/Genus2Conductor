@@ -14,11 +14,12 @@ function find_3torsion(f, p
   : MinPrec:=100
   , MaxPrec:=6400
   , Randomize:=true
-  , Strategy:=[* MinPrec, <"limit", MaxPrec>, <"randomize", Randomize>, <"double">*]
+  , Strategy:=[* <"limit", MaxPrec>, MinPrec, <"randomize", Randomize>, <"double"> *]
   , Catch:=false
   , MobiusSkip:=0
   , MobiusRandomize:=0
   , Proof:=true
+  , UseOldFactorization:=false
   , UseNP:=true
   , Time:=false
 )
@@ -52,6 +53,28 @@ function find_3torsion(f, p
     procedure log(~t, msg, ...)
       ;
     end procedure;
+  end if;
+
+  // factorization
+  if UseOldFactorization then
+    fok, fintr := IsIntrinsic("Builtin_Factorization");
+    rok, rintr := IsIntrinsic("Builtin_Roots");
+    if not (fok and rok) then
+      error "Builtin_Factorization and Builtin_Roots not available";
+    end if;
+    function factorization(f : Extensions:=false)
+      return fintr(f : Strategy:=Strategy, Extensions:=Extensions, UseNP:=UseNP);
+    end function;
+    function roots(f)
+      return rintr(f : Strategy:=Strategy);
+    end function;
+  else
+    function factorization(f : Extensions:=false)
+      return Factorization(f : Strategy:=Strategy, Extensions:=Extensions);
+    end function;
+    function roots(f)
+      return Roots(f : Strategy:=Strategy);
+    end function;
   end if;
 
   // main routine
@@ -173,7 +196,7 @@ function find_3torsion(f, p
     vprint EvenConductorExponent_Genus2: "factorizing c2_poly...";
     c2_poly := evaluate_to_univariate(G[7], 7, [K|0,0,0,0,0,0]);
     assert Degree(c2_poly) eq 40;
-    c2_facs, _, c2_certs := Factorization(c2_poly : Extensions, Strategy:=Strategy, UseNP:=UseNP);
+    c2_facs, _, c2_certs := factorization(c2_poly : Extensions);
     assert forall{fac : fac in c2_facs | fac[2] eq 1};
     assert &+[Degree(fac[1]) : fac in c2_facs] eq 40;
     factors := [];
@@ -187,7 +210,7 @@ function find_3torsion(f, p
 
       // find c2
       vprint EvenConductorExponent_Genus2: "finding c2...";
-      c2 := Roots(ChangeRing(c2_fac, L) : Strategy:=Strategy)[1][1];
+      c2 := roots(ChangeRing(c2_fac, L))[1][1];
       log(~timer, "c2");
 
       // find c1
@@ -204,7 +227,7 @@ function find_3torsion(f, p
       vprint EvenConductorExponent_Genus2: "factorizing b3_poly...";
       b3_poly := evaluate_to_univariate(G[4], 4, [L|0,0,0,c0,c1,c2]);
       assert Degree(b3_poly) eq 2;
-      b3_facs, _, b3_certs := Factorization(b3_poly : Extensions, Strategy:=Strategy, UseNP:=UseNP);
+      b3_facs, _, b3_certs := factorization(b3_poly : Extensions);
       assert forall{fac : fac in b3_facs | fac[2] eq 1};
       assert &+[Degree(fac[1]) : fac in b3_facs] eq 2;
       log(~timer, "b3 factorization");
@@ -221,7 +244,7 @@ function find_3torsion(f, p
 
           // find b3
           vprint EvenConductorExponent_Genus2: "finding b3...";
-          b3 := Roots(ChangeRing(b3_fac, M) : Strategy:=Strategy)[1][1];
+          b3 := roots(ChangeRing(b3_fac, M))[1][1];
           log(~timer, "local proof (b3)");
 
           // find b2
