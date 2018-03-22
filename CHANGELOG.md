@@ -1,3 +1,6 @@
+### v1.2.1
+- Compatibility fix with `ExactpAdics` package.
+
 ### v1.2.0
 - Adds the global proof method, so now the `Proof` parameter can take the values `"Local"` (equivalent to `true`) and `"Global"`.
 - The `UseOgg` parameter works over number fields now.
