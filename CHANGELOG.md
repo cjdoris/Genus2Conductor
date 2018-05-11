@@ -1,3 +1,6 @@
+### v1.3.0
+- Adds support for the `ExactpAdics2` package.
+
 ### v1.2.1
 - Compatibility fix with `ExactpAdics` package.
 
